@@ -1,6 +1,5 @@
 plugins {
     kotlin("jvm")
-    signing
 }
 repositories {
     mavenCentral()
@@ -56,9 +55,7 @@ publishing {
     }
 }
 
-signing {
-    sign(publishing.publications["mavenJava"])
-}
+
 
 java {
     withJavadocJar()

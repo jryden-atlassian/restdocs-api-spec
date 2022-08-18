@@ -4,7 +4,6 @@ val jacksonVersion: String by extra
 
 plugins {
     kotlin("jvm")
-    signing
 }
 
 repositories {
@@ -48,9 +47,7 @@ publishing {
     }
 }
 
-signing {
-    sign(publishing.publications["mavenJava"])
-}
+
 
 java {
     withJavadocJar()

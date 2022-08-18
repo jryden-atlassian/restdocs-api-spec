@@ -146,6 +146,8 @@ class JsonSchemaFromFieldDescriptorsGeneratorTest {
                     "firstName": "some",
                     "valid": true
                 },
+                "shippingAddress": {
+                },
                 "paymentLineItem": {
                     "lineItemTaxes": [
                         {
@@ -156,6 +158,7 @@ class JsonSchemaFromFieldDescriptorsGeneratorTest {
                 "pattern": "a",
                 "pageIndex": 1,
                 "pageSize": 255,
+                "pagePositive": 2,
                 "pageHalf": 100,
                 "page100_200": 200
             }
@@ -230,26 +233,26 @@ class JsonSchemaFromFieldDescriptorsGeneratorTest {
 
     @Test
     fun should_generate_schema_for_required_object() {
-        givenFieldDescriptorWithRequiredObject()
+        givenFieldDescriptorWithRequiredObject("myRequired", "myOptional")
 
-        whenSchemaGenerated()
+        val schema = whenSchemaGenerated()
 
         then(schema).isInstanceOf(ObjectSchema::class.java)
-        thenSchemaIsValid()
+        thenSchemaIsValid(schema)
         val objSchema = schema!!.let { it as ObjectSchema }
-        then(objSchema.requiredProperties).contains("obj")
+        then(objSchema.requiredProperties).containsOnly("myRequired")
     }
 
     @Test
     fun should_generate_schema_for_required_array_in_object() {
-        givenFieldDescriptorWithRequiredArray()
+        givenFieldDescriptorWithRequiredArray("myRequired", "myOptional")
 
-        whenSchemaGenerated()
+        val schema = whenSchemaGenerated()
 
         then(schema).isInstanceOf(ObjectSchema::class.java)
-        thenSchemaIsValid()
+        thenSchemaIsValid(schema)
         val objSchema = schema!!.let { it as ObjectSchema }
-        then(objSchema.requiredProperties).contains("array")
+        then(objSchema.requiredProperties).containsOnly("myRequired")
     }
 
     @Test
@@ -434,37 +437,46 @@ class JsonSchemaFromFieldDescriptorsGeneratorTest {
         thenSchemaIsValid()
     }
 
-    private fun thenSchemaIsValid() {
+    private fun thenSchemaIsValid(schemaToBeValidated: Schema? = schema ) {
 
         val report = JsonSchemaFactory.byDefault()
             .syntaxValidator
-            .validateSchema(JsonLoader.fromString(schemaString!!))
+            .validateSchema(JsonLoader.fromString(schema.toString()!!))
         then(report.isSuccess).describedAs("schema invalid - validation failures: %s", report).isTrue()
     }
 
-    private fun whenSchemaGenerated() {
+    private fun whenSchemaGenerated(): Schema? {
         schemaString = generator.generateSchema(fieldDescriptors!!)
         println(schemaString)
         schema = SchemaLoader.load(JSONObject(schemaString))
+        return schema
     }
 
     private fun givenFieldDescriptorWithPrimitiveArray() {
         fieldDescriptors = listOf(FieldDescriptor("a[]", "some", "ARRAY"))
     }
 
-    private fun givenFieldDescriptorWithRequiredObject() {
-        val notNullConstraint = Attributes(listOf(Constraint(NotNull::class.java.name, emptyMap())))
+    private fun givenFieldDescriptorWithRequiredObject(
+        requiredObjectName: String,
+        notRequiredObjectName: String
+    ) {
         fieldDescriptors = listOf(
-            FieldDescriptor("obj", "some", "OBJECT", attributes = notNullConstraint),
-            FieldDescriptor("obj.field", "some", "STRING")
+            FieldDescriptor(requiredObjectName, "some", "OBJECT", optional = false),
+            FieldDescriptor("$requiredObjectName.field", "some", "STRING", optional = false),
+            FieldDescriptor(notRequiredObjectName, "some", "OBJECT", optional = true),
+            FieldDescriptor("$notRequiredObjectName.field", "some", "STRING", optional = true),
         )
     }
 
-    private fun givenFieldDescriptorWithRequiredArray() {
-        val notNullConstraint = Attributes(listOf(Constraint(NotNull::class.java.name, emptyMap())))
+    private fun givenFieldDescriptorWithRequiredArray(
+        requiredName: String,
+        notRequiredName: String
+    ) {
         fieldDescriptors = listOf(
-            FieldDescriptor("array", "someArray", "ARRAY", attributes = notNullConstraint),
-            FieldDescriptor("array[].field", "some", "STRING")
+            FieldDescriptor(requiredName, "someArray", "ARRAY"),
+            FieldDescriptor("$requiredName[].field", "some", "STRING"),
+            FieldDescriptor(notRequiredName, "someArray", "ARRAY", optional =  true),
+            FieldDescriptor("$notRequiredName[].field", "some", "STRING", optional = false)
         )
     }
 

@@ -219,8 +219,8 @@ class JsonSchemaFromFieldDescriptorsGenerator {
                 path = path,
                 description = description,
                 type = type,
-                optional = this.optional || fieldDescriptor.optional, // optional if one it optional
-                ignored = this.ignored && fieldDescriptor.optional, // ignored if both are optional
+                optional = this.optional || fieldDescriptor.optional, // optional if one is optional
+                ignored = this.ignored, // ignored if both are optional
                 attributes = attributes,
                 jsonSchemaPrimitiveTypes = jsonSchemaPrimitiveTypes + jsonSchemaPrimitiveTypeFromDescriptorType(
                     fieldDescriptor.type
